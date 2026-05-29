@@ -1,0 +1,39 @@
+#!/bin/bash
+yum update -y
+yum install -y nodejs npm
+
+# Basic app server
+cat > /home/ec2-user/app.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        service: 'app-server',
+        environment: 'production',
+        vpc: '10.1.0.0/16',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/api/orders', (req, res) => {
+    res.json({
+        orders: [
+            {id: 1, customer: 'John Doe', amount: 99.99, status: 'completed'},
+            {id: 2, customer: 'Jane Smith', amount: 149.50, status: 'processing'}
+        ],
+        count: 2,
+        server: 'prod-app'
+    });
+});
+
+app.listen(8080, () => console.log('App server running on port 8080'));
+EOF
+
+cd /home/ec2-user
+npm install express
+node app.js &
+
+echo "Production App Server setup completed - Ready for SSH enhancement"

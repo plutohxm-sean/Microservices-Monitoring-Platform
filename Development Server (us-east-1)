@@ -1,0 +1,60 @@
+#!/bin/bash
+yum update -y
+yum install -y nodejs npm httpd
+
+# Basic dev page
+cat > /var/www/html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Development Environment</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f0f8ff; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .header { text-align: center; color: #ff6b35; }
+        .status { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Development Environment</h1>
+            <p>VPC: 10.2.0.0/16 | Region: us-east-1</p>
+        </div>
+        <div class="status">
+            <h3>✅ Dev Server Status: Online</h3>
+            <p>Ready for SSH enhancement</p>
+            <p>API available on port 8080</p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
+
+# Basic dev API
+cat > /home/ec2-user/dev.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        service: 'dev-server',
+        environment: 'development',
+        vpc: '10.2.0.0/16',
+        version: '2.0.0-beta',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.listen(8080, () => console.log('Dev server running on port 8080'));
+EOF
+
+systemctl start httpd
+systemctl enable httpd
+cd /home/ec2-user
+npm install express
+node dev.js &
+
+echo "Development Server setup completed - Ready for SSH enhancement"

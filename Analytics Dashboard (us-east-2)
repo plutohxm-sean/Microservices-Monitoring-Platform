@@ -1,0 +1,75 @@
+#!/bin/bash
+yum update -y
+yum install -y nodejs npm
+
+# Basic analytics server
+cat > /home/ec2-user/analytics.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/api/metrics', (req, res) => {
+    res.json({
+        service: 'analytics-dashboard',
+        region: 'us-east-2',
+        vpc: '10.3.0.0/16',
+        timestamp: new Date().toISOString(),
+        data: {
+            pageViews: Math.floor(Math.random() * 1000) + 500,
+            ordersProcessed: Math.floor(Math.random() * 100) + 50,
+            errorRate: (Math.random() * 5).toFixed(2),
+            responseTime: Math.floor(Math.random() * 200) + 100
+        }
+    });
+});
+
+app.get('/', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Analytics Dashboard</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 0; background: #1a1a2e; color: white; }
+                .header { background: #16213e; padding: 20px; text-align: center; }
+                .container { padding: 20px; }
+                .metric { background: #0f3460; padding: 20px; margin: 10px; border-radius: 10px; }
+                .btn { background: #e94560; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📊 Analytics Dashboard</h1>
+                <p>Region: us-east-2 | VPC: 10.3.0.0/16</p>
+            </div>
+            <div class="container">
+                <div class="metric">
+                    <h3>✅ Analytics Service: Online</h3>
+                    <p>Ready for SSH enhancement</p>
+                </div>
+                <button class="btn" onclick="loadMetrics()">Get Metrics</button>
+                <div id="metrics"></div>
+            </div>
+            <script>
+                function loadMetrics() {
+                    fetch('/api/metrics')
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById('metrics').innerHTML = 
+                                '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                        });
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+app.listen(3000, () => console.log('Analytics dashboard running on port 3000'));
+EOF
+
+cd /home/ec2-user
+npm install express
+node analytics.js &
+
+echo "Analytics Dashboard setup completed - Ready for SSH enhancement"

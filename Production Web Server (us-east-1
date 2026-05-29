@@ -1,0 +1,70 @@
+#!/bin/bash
+yum update -y
+yum install -y httpd nodejs npm
+
+# Basic web page
+cat > /var/www/html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production Web Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .header { text-align: center; color: #2c3e50; }
+        .status { background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .btn { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Production Web Server</h1>
+            <p>VPC: 10.1.0.0/16 | Region: us-east-1</p>
+        </div>
+        <div class="status">
+            <h3>✅ Server Status: Online</h3>
+            <p>Ready for SSH enhancement</p>
+        </div>
+        <div>
+            <button class="btn" onclick="testConnection()">Test Basic Function</button>
+            <div id="result"></div>
+        </div>
+    </div>
+    <script>
+        function testConnection() {
+            document.getElementById('result').innerHTML = '<p>✅ Basic web server is working!</p>';
+        }
+    </script>
+</body>
+</html>
+EOF
+
+# Basic API server
+cat > /home/ec2-user/api.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+app.use(express.static('/var/www/html'));
+
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'online',
+        server: 'prod-web',
+        vpc: '10.1.0.0/16',
+        region: 'us-east-1',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.listen(80, () => console.log('Web server running on port 80'));
+EOF
+
+# Start services
+systemctl start httpd
+systemctl enable httpd
+cd /home/ec2-user
+npm install express
+node api.js &
+
+echo "Production Web Server setup completed - Ready for SSH enhancement"
